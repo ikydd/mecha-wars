@@ -44,6 +44,6 @@ type Ghost struct {
 
 func NewGhost(name string, serial string) Ghost {
 	return Ghost{
-		standardCore: NewStandardCore("Ghost", name, serial, 3),
+		standardCore: NewStandardCore("Ghost", name, serial, 1),
 	}
 }

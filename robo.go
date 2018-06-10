@@ -2,62 +2,12 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"mecha-wars/mecha"
+	"mecha-wars/mecha/actions"
 	"sync"
-	"time"
 )
 
 var wg sync.WaitGroup
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
-
-func prefix(m mecha.Mecha) {
-	fmt.Printf("%s: ", m.GetDesignation())
-}
-
-func announce(m mecha.Mecha) {
-	prefix(m)
-	fmt.Printf("My name is %s,` %s Class Mech\n", m.GetDesignation(), m.GetClass())
-	prefix(m)
-	fmt.Printf("Ready for duty\n")
-}
-
-func act(mech mecha.CombatMech) string {
-	a := rand.Intn(100)
-	var action string
-	locations := [4]string{"forwards", "backwards", "left", "right"}
-	if a > 20 {
-		fmt.Printf("%s attacks: ", mech.GetDesignation())
-		mech.Attack()
-		action = "attack"
-	} else {
-		l := rand.Intn(100)
-		fmt.Printf("%s moves: ", mech.GetDesignation())
-		mech.Move(locations[l%4])
-		action = "move"
-	}
-	return action
-}
-
-func defend(mech mecha.CombatMech) int {
-	n := rand.Intn(100)
-	var hp int
-	name := mech.GetDesignation()
-	if n < 20 {
-		fmt.Println("Attack misses!")
-		hp = mech.GetHitpoints()
-	} else {
-		hp = mech.Damage(1)
-		fmt.Printf("Attack hits! %d HP remaining on %s\n", hp, name)
-		if hp == 0 {
-			fmt.Printf("Mech %s destroyed\n", name)
-		}
-	}
-	return hp
-}
 
 func fight(mech mecha.CombatMech, battlefield chan string) {
 	defer wg.Done()
@@ -65,27 +15,34 @@ func fight(mech mecha.CombatMech, battlefield chan string) {
 	for {
 		action, ok := <-battlefield
 		if !ok {
-			fmt.Printf("Mech %s has won!\n", mech.GetDesignation())
+			actions.Celebrate(mech)
 			return
 		}
 
 		if action == "attack" {
-			hp := defend(mech)
+			hp := actions.Defend(mech)
 			if hp == 0 {
 				close(battlefield)
 				return
 			}
 		}
-		battlefield <- act(mech)
+		battlefield <- actions.Act(mech)
 	}
 }
 
-func main() {
-	wg.Add(2)
-	fmt.Printf("Assembling Mecha combatants...\n")
+func introductions(mechs []mecha.CombatMech) {
+	for _, mech := range mechs {
+		actions.Introduce(mech)
+	}
+}
 
-	battlefield := make(chan string)
+func getReady(mechs []mecha.CombatMech, battlefield chan string) {
+	for _, mech := range mechs {
+		go fight(mech, battlefield)
+	}
+}
 
+func loadMechs() []mecha.CombatMech {
 	var mechA mecha.CombatMech
 	var mechB mecha.CombatMech
 	var mechs []mecha.CombatMech
@@ -94,8 +51,18 @@ func main() {
 	mechB = mecha.NewAtlas("Brunhilda", "WG1")
 	mechs = append(mechs, mechA, mechB)
 
-	go fight(mechA, battlefield)
-	go fight(mechB, battlefield)
+	return mechs
+}
+
+func main() {
+	wg.Add(2)
+	fmt.Printf("Assembling Mecha combatants...\n")
+
+	battlefield := make(chan string)
+	mechs := loadMechs()
+
+	introductions(mechs)
+	getReady(mechs, battlefield)
 
 	battlefield <- "start"
 
