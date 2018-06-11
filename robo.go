@@ -2,12 +2,18 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"mecha-wars/mecha"
 	"mecha-wars/mecha/actions"
 	"sync"
+	"time"
 )
 
 var wg sync.WaitGroup
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 func fight(mech mecha.CombatMech, battlefield chan string) {
 	defer wg.Done()
@@ -42,16 +48,35 @@ func getReady(mechs []mecha.CombatMech, battlefield chan string) {
 	}
 }
 
+func getRandomMech(roster []mecha.CombatMech) (mecha.CombatMech, []mecha.CombatMech) {
+	num := rand.Intn(100)
+	index := num % len(roster)
+	mech := roster[index]
+	roster = append(roster[:index], roster[index+1:]...)
+
+	return mech, roster
+}
+
 func loadMechs() []mecha.CombatMech {
-	var mechA mecha.CombatMech
-	var mechB mecha.CombatMech
-	var mechs []mecha.CombatMech
 
-	mechA = mecha.NewWasp("Viper", "V8")
-	mechB = mecha.NewAtlas("Brunhilda", "WG1")
-	mechs = append(mechs, mechA, mechB)
+	var firstMech mecha.CombatMech
+	var secondMech mecha.CombatMech
 
-	return mechs
+	roster := []mecha.CombatMech{
+		mecha.NewWasp("Viper", "V8"),
+		mecha.NewWasp("Mercury", "9GG"),
+		mecha.NewAtlas("Brunhilda", "WG1"),
+		mecha.NewAtlas("Suzy", "309"),
+		mecha.NewMarauder("W355"),
+	}
+
+	firstMech, roster = getRandomMech(roster)
+	secondMech, roster = getRandomMech(roster)
+
+	return []mecha.CombatMech{
+		firstMech,
+		secondMech,
+	}
 }
 
 func main() {
