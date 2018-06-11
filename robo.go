@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"mecha-wars/mecha"
-	"mecha-wars/mecha/actions"
+	"mecha-wars/wars"
 	"sync"
 	"time"
 )
@@ -21,24 +21,24 @@ func fight(mech mecha.CombatMech, battlefield chan string) {
 	for {
 		action, ok := <-battlefield
 		if !ok {
-			actions.Celebrate(mech)
+			wars.Celebrate(mech)
 			return
 		}
 
 		if action == "attack" {
-			hp := actions.Defend(mech)
+			hp := wars.Defend(mech)
 			if hp == 0 {
 				close(battlefield)
 				return
 			}
 		}
-		battlefield <- actions.Act(mech)
+		battlefield <- wars.Act(mech)
 	}
 }
 
 func introductions(mechs []mecha.CombatMech) {
 	for _, mech := range mechs {
-		actions.Introduce(mech)
+		wars.Introduce(mech)
 	}
 }
 
@@ -48,43 +48,12 @@ func getReady(mechs []mecha.CombatMech, battlefield chan string) {
 	}
 }
 
-func getRandomMech(roster []mecha.CombatMech) (mecha.CombatMech, []mecha.CombatMech) {
-	num := rand.Intn(100)
-	index := num % len(roster)
-	mech := roster[index]
-	roster = append(roster[:index], roster[index+1:]...)
-
-	return mech, roster
-}
-
-func loadMechs() []mecha.CombatMech {
-
-	var firstMech mecha.CombatMech
-	var secondMech mecha.CombatMech
-
-	roster := []mecha.CombatMech{
-		mecha.NewWasp("Viper", "V8"),
-		mecha.NewWasp("Mercury", "9GG"),
-		mecha.NewAtlas("Brunhilda", "WG1"),
-		mecha.NewAtlas("Suzy", "309"),
-		mecha.NewMarauder("W355"),
-	}
-
-	firstMech, roster = getRandomMech(roster)
-	secondMech, roster = getRandomMech(roster)
-
-	return []mecha.CombatMech{
-		firstMech,
-		secondMech,
-	}
-}
-
 func main() {
 	wg.Add(2)
 	fmt.Printf("Assembling Mecha combatants...\n")
 
 	battlefield := make(chan string)
-	mechs := loadMechs()
+	mechs := wars.DraftMechs()
 
 	introductions(mechs)
 	getReady(mechs, battlefield)
