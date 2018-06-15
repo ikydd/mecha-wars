@@ -14,9 +14,15 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func Introduce(m mecha.Mecha) {
+func introduce(m mecha.Mecha) {
 	fmt.Printf("Designate %s, %s Class Mech\n", m.GetDesignation(), m.GetClass())
 	fmt.Printf("Ready for duty\n")
+}
+
+func Introductions(mechs []mecha.CombatMech) {
+	for _, mech := range mechs {
+		introduce(mech)
+	}
 }
 
 func Defend(mech mecha.CombatMech) int {

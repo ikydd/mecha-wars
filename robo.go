@@ -9,13 +9,11 @@ import (
 	"time"
 )
 
-var wg sync.WaitGroup
-
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-func fight(mech mecha.CombatMech, battlefield chan string) {
+func fight(mech mecha.CombatMech, battlefield chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for {
@@ -36,27 +34,22 @@ func fight(mech mecha.CombatMech, battlefield chan string) {
 	}
 }
 
-func introductions(mechs []mecha.CombatMech) {
+func getReady(mechs []mecha.CombatMech, battlefield chan string, wg *sync.WaitGroup) {
 	for _, mech := range mechs {
-		wars.Introduce(mech)
-	}
-}
-
-func getReady(mechs []mecha.CombatMech, battlefield chan string) {
-	for _, mech := range mechs {
-		go fight(mech, battlefield)
+		go fight(mech, battlefield, wg)
 	}
 }
 
 func main() {
+	var wg sync.WaitGroup
 	wg.Add(2)
 	fmt.Printf("Assembling Mecha combatants...\n")
 
 	battlefield := make(chan string)
 	mechs := wars.DraftMechs()
 
-	introductions(mechs)
-	getReady(mechs, battlefield)
+	wars.Introductions(mechs)
+	getReady(mechs, battlefield, &wg)
 
 	battlefield <- "start"
 
